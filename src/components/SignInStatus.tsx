@@ -1,3 +1,6 @@
+/* eslint-disable @next/next/no-img-element */
+import { Avatar, Dropdown } from 'flowbite-react';
+import Image from 'next/image';
 import { signIn, signOut, useSession } from 'next-auth/react';
 
 export default function SignInStatus() {
@@ -6,31 +9,35 @@ export default function SignInStatus() {
   console.log('session', session, status);
   return (
     <div>
-      <p>
-        {session?.user && (
-          <>
-            {session.user.image && (
-              <span
-                style={{ backgroundImage: `url('${session.user.image}')` }}
+      {session?.user && (
+        <>
+          <Dropdown
+            label={
+              <Avatar
+                alt='User settings'
+                img={session.user.image || ''}
+                rounded={true}
               />
-            )}
-            <span>
-              <small>Signed in as</small>
-              <br />
-              <strong>{session.user.email ?? session.user.name}</strong>
-            </span>
-            <a
-              href={`/api/auth/signout`}
-              onClick={(e) => {
-                e.preventDefault();
+            }
+            arrowIcon={false}
+            inline={true}
+          >
+            <Dropdown.Header>
+              <span className='block text-sm'>{session.user.name}</span>
+              <span className='block truncate text-sm font-medium'>
+                {session.user.email}
+              </span>
+            </Dropdown.Header>
+            <Dropdown.Item
+              onClick={() => {
                 signOut();
               }}
             >
               Sign out
-            </a>
-          </>
-        )}
-      </p>
+            </Dropdown.Item>
+          </Dropdown>
+        </>
+      )}
     </div>
   );
 }

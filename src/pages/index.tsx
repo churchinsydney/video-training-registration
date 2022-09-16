@@ -64,7 +64,7 @@ export default function IndexPage({
                       'opacity-75 transition duration-1000 group-hover:opacity-100 group-hover:duration-200'
                     )}
                   />
-                  <ButtonLink href='/signin'>To Register</ButtonLink>
+                  <ButtonLink href='/register'>To Register</ButtonLink>
                 </div>
               </div>
             </article>

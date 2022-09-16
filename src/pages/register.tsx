@@ -1,3 +1,4 @@
+import { Spinner } from 'flowbite-react';
 import Image from 'next/image';
 import { BuiltInProviderType } from 'next-auth/providers';
 import {
@@ -5,12 +6,15 @@ import {
   getProviders,
   LiteralUnion,
   signIn,
+  useSession,
 } from 'next-auth/react';
 
 import Layout from '@/components/layout/Layout';
 
 import { getSettings, getTranslationsByNamespace } from '@/cms';
 import { AppContext } from '@/context/AppContext';
+
+import Registration from './registration';
 
 import { Links, Settings, Translations } from '@/types/types';
 export default function SignIn({
@@ -28,6 +32,22 @@ export default function SignIn({
   > | null;
 }) {
   console.log({ providers });
+  const { data: session, status } = useSession();
+
+  if (status === 'loading') {
+    return (
+      <div className='flex h-screen items-center'>
+        <div className='text-center'>
+          <Spinner aria-label='Center-aligned spinner example' />
+        </div>
+      </div>
+    );
+  }
+  if (session?.user) {
+    // if already registered
+    // if not registered
+    return <Registration />;
+  }
   return (
     <AppContext.Provider
       value={{

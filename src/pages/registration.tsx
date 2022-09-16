@@ -1,7 +1,6 @@
-
 import Layout from '@/components/layout/Layout';
 
-export default function NewUser() {
+export default function Registration() {
   return (
     <Layout>
       <section className='flex h-screen items-center bg-gray-50 dark:bg-gray-900'>

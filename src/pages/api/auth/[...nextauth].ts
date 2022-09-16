@@ -20,7 +20,7 @@ const client = new FaunaClient({
 // https://next-auth.js.org/configuration/options
 export const authOptions: NextAuthOptions = {
   pages: {
-    signIn: '/signin',
+    signIn: '/register',
     // signOut: '/auth/signout',
     // error: '/auth/error', // Error code passed in query string as ?error=
     // verifyRequest: '/auth/verify-request', // (used for check email message)
@@ -83,12 +83,7 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async signIn({ user, account, profile, email, credentials }) {
       console.log('signIn', user, account, profile, email, credentials);
-      // if already registered, return 'already registered page
       return true;
-    },
-    async redirect({ url, baseUrl }) {
-      console.log('redirect', url, baseUrl);
-      return `${baseUrl}/registration`;
     },
   },
 };
