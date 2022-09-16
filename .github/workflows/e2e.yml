@@ -1,0 +1,27 @@
+name: e2e
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: deployed url
+        required: true
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - run: echo "Preview URL ${{ github.event.inputs.url }}"
+      # https://github.com/cypress-io/github-action
+      - name: Cypress run 🏃‍♀️
+        uses: cypress-io/github-action@v4.1.1
+        with:
+          env: MEMBERS_PASSWORD=${{secrets.MEMBERS_PASSWORD}},MAILGUN_API_KEY=${{ secrets.MAILGUN_API_KEY }},CMS_CYPRESS_USERNAME=${{ secrets.CMS_CYPRESS_USERNAME }},CMS_CYPRESS_PASSWORD=${{ secrets.CMS_CYPRESS_PASSWORD }}
+          install: true
+          browser: chrome
+          record: true
+          config: baseUrl=${{ github.event.inputs.url }}
+        env:
+          CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}

@@ -1,0 +1,157 @@
+name: Build and Deploy to Vercel
+on:
+  workflow_dispatch:
+    inputs:
+      publishId:
+        description: CMS publish id
+        required: true
+  push:
+    branches:
+      - "master"
+  pull_request:
+  release:
+    types: [published]
+
+jobs:
+  push-run-id-to-cms:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Push run id to CMS
+        run: |
+          echo "CMS publish id: ${{ github.event.inputs.publishId }}"
+
+          CMS_TOKEN="$(curl --request POST \
+            --url "${{ secrets.CMS_API_ENDPOINT}}/auth/login" \
+            --header 'Content-Type: application/json' \
+            --data '{
+              "email": "${{ secrets.CMS_API_PUBLISH }}",
+              "password": "${{ secrets.CMS_API_PUBLISH_PASSWORD }}"
+            }' | jq -r '.data.access_token')" 
+          curl --request PATCH \
+            --url "${{ secrets.CMS_API_ENDPOINT}}/items/publish/${{ github.event.inputs.publishId }}" \
+            --header "Authorization: Bearer $CMS_TOKEN" \
+            --header 'Content-Type: application/json' \
+            --data '{
+              "run_id": "${{ github.run_id }}",
+              "run_number": "${{ github.run_number }}",
+              "status": "deploying"
+            }'
+
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get latest release with tag
+        id: latest-release
+        run: |
+          echo ${{ github.head_ref }}
+          echo ${{ github.ref_name }}
+          echo "Ref: ${{ github.ref }}"
+          echo "LATEST_RELEASE_TAG=$(curl -s ${{ github.api_url }}/repos/${{ github.repository }}/releases/latest | jq -r '.tag_name')" >> $GITHUB_ENV
+
+      - name: Configure environment
+        run: |
+          echo "Trigger by event: ${{ github.event_name }}"
+          echo "Latest release tag: ${{ env.LATEST_RELEASE_TAG }}"
+          echo "Git ref: ${{ github.ref_name }}"
+
+          RELEASE=${{ github.event.release.tag_name }}
+          if [[ "$RELEASE" != "" || ${{ github.event_name }} == 'workflow_dispatch' ]]; then
+            echo "Production deployment"
+            echo "PROD_BUILD=--prod" >> $GITHUB_ENV
+          else
+            echo "Preview deployment"
+            echo "PROD_BUILD=" >> $GITHUB_ENV
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Checkout latest release
+        run: |
+          if [[ ${{ github.event_name }} == 'workflow_dispatch' ]]; then
+            git fetch --unshallow --tags
+            git checkout tags/${{ env.LATEST_RELEASE_TAG }} -B latest-release-${{ env.LATEST_RELEASE_TAG }}
+          fi
+          ls
+
+      - name: 📬 Caching
+        uses: actions/cache@v2
+        with:
+          path: |
+            **/node_modules
+            ${{ github.workspace }}/.next/cache
+          key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn-lock.json') }}
+
+      - name: Use Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: 16.x
+
+      - name: 🧰 Install dependencies
+        run: yarn
+
+      - name: 📦 Build project
+        run: |
+          echo "DEPLOY_COMMIT=${{ github.sha }}" >> .env
+          echo "DEPLOY_BRANCH=${{ github.head_ref }}" >> .env
+          echo "DEPLOY_REF=${{ github.ref_name }}" >> .env
+          echo "DEPLOY_SOURCE=${{ github.event_name }}" >> .env
+          echo "CMS_API_ENDPOINT=${{ secrets.CMS_API_ENDPOINT }}" >> .env
+          echo "CMS_API_USERNAME=${{ secrets.CMS_API_USERNAME }}" >> .env
+          echo "CMS_API_PASSWORD=${{ secrets.CMS_API_PASSWORD }}" >> .env
+          echo "MAILGUN_API_KEY=${{ secrets.MAILGUN_API_KEY }}" >> .env
+          echo "NEXT_PUBLIC_ANALYTICS_ID=${{ secrets.NEXT_PUBLIC_ANALYTICS_ID }}" >> .env
+          sudo timedatectl set-timezone Australia/Sydney; npx vercel build ${{ env.PROD_BUILD }}
+
+      - name: Deploy to Vercel Action
+        id: vercel-deploy
+        uses: zhex900/deploy-to-vercel-action@master
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VERCEL_ARGS: "--prebuilt"
+          CREATE_COMMENT: true
+          TRIM_COMMIT_MESSAGE: true
+          PRODUCTION: ${{ env.PROD_BUILD != '' }}
+
+      - name: Trigger e2e
+        run: |
+          echo "Preview URL: ${{ steps.vercel-deploy.outputs.PREVIEW_URL }}"
+          curl --request POST \
+            --url "https://api.github.com/repos/${{ github.repository }}/actions/workflows/e2e.yml/dispatches" \
+            --header "Authorization: token ${{ secrets.GH_TOKEN }}" \
+            --header 'Accept: application/vnd.github+json' \
+            --header 'Content-Type: application/json' \
+            --data '{
+              "ref": "${{ github.event.pull_request.head.ref }}",
+              "inputs" : {
+                "url": "${{ steps.vercel-deploy.outputs.PREVIEW_URL }}"
+              }
+            }'
+
+  notify-cms:
+    runs-on: ubuntu-latest
+    needs:
+      - deploy
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Push status to CMS
+        run: |
+          echo ${{ github.event.workflow_run.conclusion }}
+          CMS_TOKEN="$(curl --request POST \
+            --url "${{ secrets.CMS_API_ENDPOINT}}/auth/login" \
+            --header 'Content-Type: application/json' \
+            --data '{
+              "email": "${{ secrets.CMS_API_PUBLISH }}",
+              "password": "${{ secrets.CMS_API_PUBLISH_PASSWORD }}"
+            }' | jq -r '.data.access_token')" 
+          curl --request PATCH \
+            --url "${{ secrets.CMS_API_ENDPOINT}}/items/publish/${{ github.event.inputs.publishId }}" \
+            --header "Authorization: Bearer $CMS_TOKEN" \
+            --header 'Content-Type: application/json' \
+            --data '{
+              "status": "${{ job.status }}"
+            }'

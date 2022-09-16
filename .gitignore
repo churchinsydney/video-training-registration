@@ -1,0 +1,68 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+test.js
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+.env.local
+.env.production
+.env.test
+.env
+
+# testing
+/coverage
+
+.history
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+cypress.env.json
+
+# local env files
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# vercel
+.vercel/output
+.vercel/README.txt
+
+# next-sitemap
+robots.txt
+sitemap.xml
+
+# cypress
+cypress/videos
+cypress/screenshots
+
+# rss
+rss.xml
+
+# PWA files
+**/public/sw.js
+**/public/workbox-*.js
+**/public/worker-*.js
+**/public/sw.js.map
+**/public/workbox-*.js.map
+**/public/worker-*.js.map
+.env.production
+public/sitemap-0.xml
+
+# Local Netlify folder
+.netlify

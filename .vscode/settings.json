@@ -1,0 +1,49 @@
+{
+  "files.exclude": {
+    // Hide the node_modules folder
+    "node_modules/": true,
+    "*/node_modules/": true,
+    // Hide all files that end in .d.ts
+    "**/*.d.ts": true,
+    // Hide all files that end with .js if they have a .ts file
+    "**/*.js": {
+      "when": "$(basename).ts"
+    }
+  },
+  "css.validate": false,
+  "editor.formatOnSave": true,
+  "editor.tabSize": 2,
+  "headwind.runOnSave": false,
+  "editor.codeActionsOnSave": {
+    "source.fixAll": true
+  },
+  "cSpell.words": [
+    "Borales",
+    "cellspacing",
+    "certificatemanager",
+    "churchinsydney",
+    "Directus",
+    "esbuild",
+    "flowbite",
+    "headlessui",
+    "Kellyville",
+    "lightbox",
+    "MAILGUN",
+    "newtab",
+    "nextjs",
+    "postbuild",
+    "rehype",
+    "Scrollspy",
+    "sendgrid",
+    "svgr",
+    "testid",
+    "typeahead",
+    "Unstyled",
+    "vercel",
+    "vtest",
+    "timedatectl",
+    "unshallow",
+    "macbook"
+  ],
+  "git.ignoreLimitWarning": true
+}
