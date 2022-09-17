@@ -9,12 +9,11 @@ import {
   useSession,
 } from 'next-auth/react';
 
+import Registration from '@/components/forms/registration';
 import Layout from '@/components/layout/Layout';
 
 import { getSettings, getTranslationsByNamespace } from '@/cms';
 import { AppContext } from '@/context/AppContext';
-
-import Registration from './registration';
 
 import { Settings, Translations } from '@/types/types';
 export default function SignIn({
