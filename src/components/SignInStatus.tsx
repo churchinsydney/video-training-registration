@@ -13,11 +13,7 @@ export default function SignInStatus() {
         <>
           <Dropdown
             label={
-              <Avatar
-                alt='User settings'
-                img={session.user.image || ''}
-                rounded={true}
-              />
+              <Avatar alt='' img={session.user.image || ''} rounded={true} />
             }
             arrowIcon={false}
             inline={true}

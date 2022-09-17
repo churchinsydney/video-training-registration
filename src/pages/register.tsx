@@ -1,10 +1,10 @@
 import { Spinner } from 'flowbite-react';
 import Image from 'next/image';
-import { BuiltInProviderType } from 'next-auth/providers';
+// import { BuiltInProviderType } from 'next-auth/providers';
 import {
-  ClientSafeProvider,
-  getProviders,
-  LiteralUnion,
+  // ClientSafeProvider,
+  // getProviders,
+  // LiteralUnion,
   signIn,
   useSession,
 } from 'next-auth/react';
@@ -16,43 +16,58 @@ import { AppContext } from '@/context/AppContext';
 
 import Registration from './registration';
 
-import { Links, Settings, Translations } from '@/types/types';
+import { Settings, Translations } from '@/types/types';
 export default function SignIn({
-  providers,
   translations,
-  links,
   settings,
 }: {
   translations: Translations;
-  links: Links;
   settings: Settings;
-  providers: Record<
-    LiteralUnion<BuiltInProviderType, string>,
-    ClientSafeProvider
-  > | null;
 }) {
-  console.log({ providers });
+  // console.log({ providers });
   const { data: session, status } = useSession();
 
   if (status === 'loading') {
     return (
-      <div className='flex h-screen items-center'>
-        <div className='text-center'>
-          <Spinner aria-label='Center-aligned spinner example' />
-        </div>
-      </div>
+      <AppContext.Provider
+        value={{
+          translations,
+          // links,
+          settings,
+        }}
+      >
+        <Layout>
+          <div className='flex h-screen items-center'>
+            <div className='text-center'>
+              <Spinner aria-label='Center-aligned spinner example' />
+            </div>
+          </div>
+        </Layout>
+      </AppContext.Provider>
     );
   }
   if (session?.user) {
     // if already registered
     // if not registered
-    return <Registration />;
+    return (
+      <AppContext.Provider
+        value={{
+          translations,
+          // links,
+          settings,
+        }}
+      >
+        <Layout>
+          <Registration />
+        </Layout>
+      </AppContext.Provider>
+    );
   }
   return (
     <AppContext.Provider
       value={{
         translations,
-        links,
+        // links,
         settings,
       }}
     >
@@ -292,29 +307,15 @@ export default function SignIn({
   );
 }
 
-export async function getServerSideProps(context: any) {
-  const providers = await getProviders();
+export async function getStaticProps({ locale }: { locale: string }) {
   return {
     props: {
-      providers,
       settings: await getSettings(),
       translations: await getTranslationsByNamespace(
         ['home', 'common', 'post'],
-        'en'
+        locale
       ),
+      // links: await getLinks(locale),
     },
   };
 }
-
-// export async function getStaticProps({ locale }: { locale: string }) {
-//   return {
-//     props: {
-//       settings: await getSettings(),
-//       translations: await getTranslationsByNamespace(
-//         ['home', 'common', 'post'],
-//         locale
-//       ),
-//       links: await getLinks(locale),
-//     },
-//   };
-// }
